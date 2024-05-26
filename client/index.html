@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <title>Play Kyo!</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <nav class="header page">
+      <h2 id="turn"></h2>
+      <div><button class="btn" id="connect" onclick="newOnlineGame()">New Game</button></div>
+      <div><button class="btn" id="disconnect" disabled onclick="disconnectFromGame()">Forfeit</button></div>
+      <div><button class="btn" id="settings" onclick="openSettings()">Settings</button></div>
+      <div><a class="btn" id="aboutLink" href="about.html">Rules and Info</a></div>
+      <h4 id="user">Playing locally</h4>
+    </nav>
+    <div id="game">
+      <div id="board">
+
+      </div>
+      <div id="sidebar">
+        <ul id="turnlog">
+        
+        </ul>
+      </div>
+    </div>
+
+    <div id="dialogShadow" class="hidden">
+      <div id="dialog">
+      </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script>resetBoard()</script>
+
+  </body>
+</html>

@@ -1,0 +1,254 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: gray;
+  --tile-size: min(5vw, 6.8vh);
+}
+
+h1 {
+  text-align: center;
+}
+
+.page {
+  margin: 10px;
+  padding: 20px;
+  border: 1px solid black;
+  border-radius: 5px;
+  background-color: antiquewhite;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.itch .header {
+  font-size: 13px;
+}
+
+#turn {
+  display: inline;
+  margin: 0;
+  margin-right: 20px;
+}
+
+#user {
+  display: inline;
+  margin: 0;
+  text-align: right;
+  flex-grow: 1;
+}
+
+.flex {
+  display: flex;
+}
+.flex-column {
+  flex-direction: column;
+}
+
+.gap-1 {
+  gap: 4px;
+}
+.gap-2 {
+  gap: 8px;
+}
+.gap-3 {
+  gap: 12px;
+}
+.gap-4 {
+  gap: 16px;
+}
+
+.mx-1 {
+  margin-left: 4px;
+  margin-right: 4px;
+}
+.mt-0 {
+  margin-top: 0;
+}
+.ml-1 {
+  margin-left: 4px;
+}
+.ml-2 {
+  margin-left: 8px;
+}
+.ml-3 {
+  margin-left: 12px;
+}
+.ml-4 {
+  margin-left: 16px;
+}
+
+.btn {
+  padding: 8px;
+  border: none;
+  border-radius: 5px;
+  background-color: dodgerblue;
+  color: whitesmoke;
+  min-width: 48px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn:hover {
+  background-color: rgb(52, 154, 255);
+}
+.btn:active {
+  background-color: rgb(17, 123, 228);
+}
+.btn:disabled {
+  background-color: rgb(130, 130, 130);
+}
+
+.selectBox label {
+  margin-right: 8px;
+}
+.selectBox select {
+  padding: 3px;
+  border-radius: 8px;
+}
+
+#dialogShadow {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  padding: 0 40px;
+  background: #000a;
+}
+
+#dialog {
+  max-width: 600px;
+  margin: 20% auto;
+  padding: 40px;
+  border: 1px solid black;
+  border-radius: 10px;
+  background-color: antiquewhite;
+}
+
+blockquote {
+  background-color: whitesmoke;
+  padding: 15px;
+  border: 2px solid #aaa;
+  border-radius: 15px;
+}
+
+.hidden {
+  display: none;
+}
+
+#game {
+  display: flex;
+  padding: 10px;
+  gap: 2%;
+  max-height: calc(var(--tile-size) * 12 + 30px);
+}
+
+#board {
+  background-color: darkgray;
+  padding: var(--tile-size);
+  border-radius: var(--tile-size);
+  border: 5px outset lightgray;
+
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+
+#sidebar {
+  border: 1px solid black;
+  border-radius: 20px;
+  background-color: whitesmoke;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+#turnlog {
+  padding: 0;
+  margin: 10px;
+  list-style-type: none;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.logItem {
+  background-color: goldenrod;
+  padding: 4px 10px;
+}
+.logItem:nth-child(even) {
+  background-color: darkred;
+}
+
+.boardRow {
+  display: flex;
+  flex-direction: row;
+  position: relative;
+}
+
+.boardTile {
+  display: flex;
+  flex-direction: column-reverse;
+  position: relative;
+  width: var(--tile-size);
+  height: var(--tile-size);
+  padding: 1%;
+}
+
+.boardLabel {
+  justify-content: center;
+  position: absolute;
+}
+.boardLabel.right {
+  right: calc(0px - var(--tile-size));
+}
+.boardLabel.left {
+  left: calc(0px - var(--tile-size));
+}
+.boardLabel.top {
+  top: calc(0px - var(--tile-size));
+}
+.boardLabel.bottom {
+  bottom: calc(0px - var(--tile-size));
+}
+.boardLabel span {
+  text-align: center;
+  font-size: calc(var(--tile-size) / 2);
+}
+
+.darkTile {
+  background-color: rgb(81, 47, 33);
+}
+
+.lightTile {
+  background-color: rgb(209, 190, 144);
+}
+
+.chipContainer {
+  display: flex;
+  flex-direction: column-reverse;
+  height: 9%;
+  position: relative;
+}
+
+.pawn {
+  position: relative;
+  z-index: 2;
+  width: 80%;
+  margin: 5% 10%;
+}
+
+.lifted {
+  bottom: 10px;
+}
+
+.lifted.bottom {
+  filter: drop-shadow(0 10px 4px rgba(0,0,0,0.5));
+}
+
+/* .king {
+  bottom: 5%;
+} */
