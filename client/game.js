@@ -34,15 +34,18 @@ class Tile {
   }
 
   setPawn(pawn) {
-    if (pawn === null) {
-      this.pawn = null;
-      this.tileDiv.removeChild(pawn.element);
-    } else if (this.pawn === null) {
+    if (this.pawn === null && pawn) {
       this.pawn = pawn;
       this.tileDiv.appendChild(pawn.element)
     } else {
       throw 'This really shouldn\'t happen';
     }
+  }
+
+  clearPawn() {
+    const pawn = this.pawn;
+    this.pawn = null;
+    return pawn;
   }
 
   /**
