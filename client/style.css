@@ -157,6 +157,13 @@ blockquote {
   -moz-user-select: none; /* Firefox */
   -ms-user-select: none; /* IE10+/Edge */
   user-select: none; /* Standard */
+
+  display: flex;
+  flex-direction: column;
+}
+
+#board.flip {
+  flex-direction: column-reverse;
 }
 
 #sidebar {
@@ -187,6 +194,11 @@ blockquote {
   display: flex;
   flex-direction: row;
   position: relative;
+  /* background-color: rgb(209, 190, 144); */
+}
+
+#board.flip .boardRow {
+  flex-direction: row-reverse;
 }
 
 .boardTile {
@@ -196,6 +208,13 @@ blockquote {
   width: var(--tile-size);
   height: var(--tile-size);
   padding: 1%;
+}
+
+.tile {
+  background-color: rgb(105, 97, 93);
+  width: calc(var(--tile-size) - 4px);
+  height: calc(var(--tile-size) - 4px);
+  margin: 4px;
 }
 
 .boardLabel {
@@ -214,17 +233,17 @@ blockquote {
 .boardLabel.bottom {
   bottom: calc(0px - var(--tile-size));
 }
+#board.flip .boardLabel.top {
+  bottom: calc(0px - var(--tile-size));
+  top: unset;
+}
+#board.flip .boardLabel.bottom {
+  top: calc(0px - var(--tile-size));
+  bottom: unset;
+}
 .boardLabel span {
   text-align: center;
   font-size: calc(var(--tile-size) / 2);
-}
-
-.darkTile {
-  background-color: rgb(81, 47, 33);
-}
-
-.lightTile {
-  background-color: rgb(209, 190, 144);
 }
 
 .chipContainer {
@@ -243,11 +262,28 @@ blockquote {
 
 .lifted {
   bottom: 10px;
-}
-
-.lifted.bottom {
   filter: drop-shadow(0 10px 4px rgba(0,0,0,0.5));
 }
+
+.wall {
+  position: absolute;
+  background-color: wheat;
+}
+.wall.vertical {
+  height: calc((var(--tile-size)* 2));
+  width: 8px;
+  top: 0;
+  right: -8px;
+}
+.wall.horizontal {
+  height: 8px;
+  width: calc((var(--tile-size)* 2));
+  bottom: -8px;
+  left: 0;
+}
+
+/* .lifted.bottom {
+} */
 
 /* .king {
   bottom: 5%;
