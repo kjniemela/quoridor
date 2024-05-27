@@ -27,16 +27,26 @@ class Tile {
   }
 
   canMoveTo(x, y) {
-    if (Math.abs(x-this.x) <= 1 && Math.abs(y-this.y) <= 1) {
-      return true;
-    }
-    return false;
+    const verticalMove = Math.abs(y-this.y);
+    if (verticalMove > 1) return false;
+    const positiveMove = (verticalMove ? y-this.y : x-this.x) > 0;
+    const blockingTiles = positiveMove ? [
+      this,
+      getTile(this.x - verticalMove, this.y - Number(!verticalMove)),
+    ] : [
+      getTile(this.x - Number(!verticalMove), this.y - verticalMove),
+      getTile(this.x - 1, this.y - 1),
+    ];
+    return (
+      Math.abs(x-this.x) + Math.abs(y-this.y) === 1 &&
+      blockingTiles.every((tile) => tile && !tile.walls[Number(!verticalMove)])
+    );
   }
 
   setPawn(pawn) {
     if (this.pawn === null && pawn) {
       this.pawn = pawn;
-      this.tileDiv.appendChild(pawn.element)
+      this.tileDiv.appendChild(pawn.element);
     } else {
       throw 'This really shouldn\'t happen';
     }
