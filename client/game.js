@@ -29,19 +29,23 @@ class Tile {
   }
 
   onClick(e) {
-    if (selectedTile === null) {
-      if (this.pawn && !this.pawn.lifted && canPlayerPlay(this.pawn.player)) {
-        selectedTile = this;
-        this.pawn.lift();
-      }
+    if (e.shiftKey) {
+      this.addWall(Number(e.ctrlKey));
     } else {
-      const { x, y } = this;
-      if (this.is(selectedTile)) {
-        selectedTile = null;
-        this.pawn?.unlift();
-      } else if (selectedTile.canMoveTo(x, y)) {
-        if (selectedTile.pawn && canPlayerPlay(selectedTile.pawn.player)) {
-          selectedTile.movePawn(x, y);
+      if (selectedTile === null) {
+        if (this.pawn && !this.pawn.lifted && canPlayerPlay(this.pawn.player)) {
+          selectedTile = this;
+          this.pawn.lift();
+        }
+      } else {
+        const { x, y } = this;
+        if (this.is(selectedTile)) {
+          selectedTile = null;
+          this.pawn?.unlift();
+        } else if (selectedTile.canMoveTo(x, y)) {
+          if (selectedTile.pawn && canPlayerPlay(selectedTile.pawn.player)) {
+            selectedTile.movePawn(x, y);
+          }
         }
       }
     }
@@ -127,6 +131,7 @@ class Tile {
           classes: ['wall', vertical ? 'vertical' : 'horizontal'],
         })
       );
+      passTurn();
     }
   }
 }
