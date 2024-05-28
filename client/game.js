@@ -61,7 +61,7 @@ class Tile {
     return (
       getTile(x, y) !== null &&
       Math.abs(x-this.x) + Math.abs(y-this.y) === 1 &&
-      blockingTiles.every((tile) => tile && !tile.walls[Number(!verticalMove)])
+      blockingTiles.every((tile) => !tile || !tile.walls[Number(!verticalMove)])
     );
   }
 
@@ -77,7 +77,7 @@ class Tile {
   clearPawn() {
     const pawn = this.pawn;
     this.pawn = null;
-    this.tileDiv.removeChild(pawn.element);
+    if (pawn) this.tileDiv.removeChild(pawn.element);
     return pawn;
   }
 
@@ -86,15 +86,25 @@ class Tile {
   }
 
   movePawn(x, y) {
-    if (this.hasPawn() && this.canMoveTo(x, y)) {
-      const pawn = this.clearPawn();
-      if (canPlayerPlay(pawn.player)) {
-        getTile(x, y).setPawn(pawn);
+    const pawn = this.clearPawn();
+    if (pawn && canPlayerPlay(pawn.player) && this.canMoveTo(x, y)) {
+      const target = getTile(x, y);
+      if (target.hasPawn()) {
+        if (target.canMoveTo(x + (x - this.x), y + (y - this.y))) {
+          const newTarget = getTile(x + (x - this.x), y + (y - this.y));
+          newTarget.setPawn(pawn);
+          pawn.unlift();
+          passTurn();
+          return true;
+        }
+      } else {
+        target.setPawn(pawn);
         pawn.unlift();
         passTurn();
         return true;
       }
     }
+    this.setPawn(pawn);
     return false;
   }
 
@@ -345,7 +355,7 @@ function resetBoard() {
 
 function getTile(x, y) {
   const row = tiles[y];
-  if (row) return row[x];
+  if (row) return row[x] ?? null;
   else return null;
 }
 
