@@ -7,8 +7,7 @@ let turnLog = [];
 
 const urlGameId = location.hash.substring(1);
 
-// const socket = new WebSocket(`wss://hmi.dynu.net/quoridor`);
-const socket = new WebSocket(`ws://localhost:3011/quoridor`);
+const socket = new WebSocket(`wss://hmi.dynu.net/quoridor`);
 let playingAs = null;
 
 class Tile {
@@ -38,6 +37,7 @@ class Tile {
       getTile(this.x - 1, this.y - 1),
     ];
     return (
+      getTile(x, y) !== null &&
       Math.abs(x-this.x) + Math.abs(y-this.y) === 1 &&
       blockingTiles.every((tile) => tile && !tile.walls[Number(!verticalMove)])
     );
@@ -55,7 +55,21 @@ class Tile {
   clearPawn() {
     const pawn = this.pawn;
     this.pawn = null;
+    this.tileDiv.removeChild(pawn.element);
     return pawn;
+  }
+
+  hasPawn() {
+    return this.pawn !== null;
+  }
+
+  movePawn(x, y) {
+    if (this.hasPawn() && this.canMoveTo(x, y)) {
+      const pawn = this.clearPawn();
+      getTile(x, y).setPawn(pawn);
+      return true;
+    }
+    return false;
   }
 
   /**
