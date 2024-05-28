@@ -7,7 +7,7 @@ let playerCount = 2;
 let turnLog = [];
 
 const urlGameId = location.hash.substring(1);
-const isLocalGame = urlGameId.length > 0;
+const isLocalGame = urlGameId.length === 0;
 
 const socket = new WebSocket(`wss://hmi.dynu.net/quoridor`);
 let playingAs = null;
@@ -24,8 +24,27 @@ class Tile {
     this.tileDiv.onclick = this.onClick.bind(this);
   }
 
+  is(tile) {
+    return tile.x === this.x && tile.y === this.y;
+  }
+
   onClick(e) {
-    
+    if (selectedTile === null) {
+      if (this.pawn && !this.pawn.lifted && canPlayerPlay(this.pawn.player)) {
+        selectedTile = this;
+        this.pawn.lift();
+      }
+    } else {
+      const { x, y } = this;
+      if (this.is(selectedTile)) {
+        selectedTile = null;
+        this.pawn?.unlift();
+      } else if (selectedTile.canMoveTo(x, y)) {
+        if (selectedTile.pawn && canPlayerPlay(selectedTile.pawn.player)) {
+          selectedTile.movePawn(x, y);
+        }
+      }
+    }
   }
 
   canMoveTo(x, y) {
@@ -71,6 +90,7 @@ class Tile {
       const pawn = this.clearPawn();
       if (canPlayerPlay(pawn.player)) {
         getTile(x, y).setPawn(pawn);
+        pawn.unlift();
         passTurn();
         return true;
       }
@@ -128,6 +148,8 @@ class Pawn {
 }
 
 function passTurn() {
+  if (selectedTile) selectedTile.pawn?.unlift();
+  selectedTile = null;
   currentPlayer = (currentPlayer + 1) % playerCount;
   if (canPlayerPlay(currentPlayer)) {
     if (localBots[currentPlayer]) {
