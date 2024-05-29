@@ -1,95 +1,74 @@
 const crypto = require('crypto');
 
 class Game {
-  constructor(id, config) {
+  constructor(id, playerCount) {
     this.id = id;
-    this.goldPlayer = null;
-    this.redPlayer = null;
     this.boardState = [];
     this.turnLog = [];
-    this.isGoldsTurn = true;
-    this.config = config;
+    this.players = [];
+    this.currentPlayer = 0;
+    this.playerCount = playerCount;
   }
 
   connectPlayer(player) {
-    if (this.goldPlayer === null) {
-      this.goldPlayer = player;
+    if (this.players.length < this.playerCount) {
+      this.players.push(player);
       player.setConnData({ gameID: this.id });
-      return [true, true];
-    }
-    else if (this.redPlayer === null) {
-      this.redPlayer = player;
-      player.setConnData({ gameID: this.id });
-      return [true, false];
+      return [true, this.players.length - 1];
     }
     else {
-      return [false, false];
+      return [false, null];
     }
   }
 
   tryBeginGame() {
-    if (this.goldPlayer && this.redPlayer) {
-      this.sendTo(true, { update: [['beginGame', [this.config]]] });
-      this.sendTo(false, { update: [['beginGame', [this.config]]] });
+    if (this.players.length === this.playerCount) {
+      this.sendToAll({ update: [['beginGame', [this.playerCount]]] });
+      this.sendToAll({ update: [['beginTurn', [this.currentPlayer]]] });
     }
   }
 
-  sendTo(toGold, data) {
-    if (toGold && this.goldPlayer) this.goldPlayer.send(data);
-    else if (this.redPlayer) this.redPlayer.send(data);
+  sendTo(playerID, data) {
+    if (this.players[playerID]) this.players[playerID].send(data);
+  }
+
+  sendToAll(data) {
+    for (let i = 0; i < this.playerCount; i++) {
+      this.sendTo(i, data);
+    } 
   }
 
   pushBoardState(player, state, log) {
-    if ((player === this.goldPlayer) === this.isGoldsTurn) {
-      this.isGoldsTurn = !this.isGoldsTurn;
+    if (this.players.indexOf(player) === this.currentPlayer) {
+      this.currentPlayer = (this.currentPlayer + 1) % this.playerCount;
       this.boardState = state;
       this.turnLog = log;
-      this.sendTo(this.isGoldsTurn, { update: [['passTurn', [this.boardState, this.turnLog]]] });
+      this.sendToAll({ update: [['boardState', [this.boardState, this.turnLog]]] });
+      this.sendToAll({ update: [['beginTurn', [this.currentPlayer]]] });
       this.checkWinConditions();
     }
   }
 
   checkWinConditions() {
-    let [redKing, goldKing, redEnergy, goldEnergy] = [false, false, false, false];
-    for (const row of this.boardState) {
-      for (const tile of row) {
-        for (const pawn of tile) {
-          if (pawn.type === 'king') {
-            if (pawn.isGold) goldKing = true;
-            else redKing = true;
-          }
-          else if (pawn.isEnergy) {
-            if (pawn.isGold) goldEnergy = true;
-            else redEnergy = true;
-          }
-        }
-      }
-    }
-    if (!(redKing && redEnergy)) this.win(true);
-    else if (!(goldKing && goldEnergy)) this.win(false);
+    console.log('FIXME!')
   }
 
-  win(isGold) {
-    if (isGold) {
-      this.sendTo(true, { update: [['gameWon', []]] });
-      this.sendTo(false, { update: [['gameLost', []]] });
-    }
-    else {
-      this.sendTo(false, { update: [['gameWon', []]] });
-      this.sendTo(true, { update: [['gameLost', []]] });
+  win(playerID) {
+    for (let i = 0; i < this.playerCount; i++) {
+      if (i === playerID) this.sendTo(i, { update: [['gameWon', []]] });
+      else this.sendTo(i, { update: [['gameLost', []]] });
     }
   }
 
-  forfeit(player) {
-    this.sendTo(true, { update: [['gameForfeit', []]] });
-    this.sendTo(false, { update: [['gameForfeit', []]] });
-    if (player === this.goldPlayer) this.win(false);
-    else this.win(true);
-  }
+  // forfeit(player) {
+  //   this.sendToAll({ update: [['gameForfeit', []]] });
+  //   this.win(this.players.indexOf(player));
+  // }
 
   close() {
-    if (this.goldPlayer) this.goldPlayer.connData.gameID = null;
-    if (this.redPlayer) this.redPlayer.connData.gameID = null;
+    for (const player of this.players) {
+      player.connData.gameID = null;
+    }
   }
 }
 
@@ -184,16 +163,16 @@ class Manager {
           break;
         case 'connect':
           if (args[0] === gameID) break;
-          const [success, isGold] = this.connectToGame(player, args[0]);
+          const [success, playerID] = this.connectToGame(player, args[0]);
           if (success) {
-            this.sendTo(ws, { update: [['connected', [args[0], isGold]]] });
+            this.sendTo(ws, { update: [['connected', [args[0], playerID]]] });
             this.games[args[0]].tryBeginGame();
           }
           else player.send({ error: [['connectRefused', [args[0]]]] });
           break;
         case 'disconnect':
           if (gameID !== null && gameID in this.games) {
-            this.games[gameID].forfeit(player);
+            // this.games[gameID].forfeit(player);
             this.games[gameID].close();
             delete this.games[gameID];
             player.send({ update: [['disconnected', []]] });

@@ -7,7 +7,7 @@ let playerCount = 2;
 let turnLog = [];
 
 const urlGameId = location.hash.substring(1);
-const isLocalGame = urlGameId.length === 0;
+let isLocalGame = true;
 
 const socket = new WebSocket(`wss://hmi.dynu.net/quoridor`);
 let playingAs = null;
@@ -162,10 +162,25 @@ class Pawn {
   }
 }
 
+function pushBoardState() {
+  const state = tiles.map(row => (
+    row.map(tile => tile.pawn?.player ?? null)
+  ));
+  sendActions([['pushBoardState', [state, turnLog]]]);
+}
+
 function passTurn() {
   if (selectedTile) selectedTile.pawn?.unlift();
   selectedTile = null;
-  currentPlayer = (currentPlayer + 1) % playerCount;
+  if (!isLocalGame && currentPlayer === playingAs) pushBoardState();
+  const nextPlayer = (currentPlayer + 1) % playerCount;
+  if (couldPlayerPlayLocally(nextPlayer)) beginTurn(nextPlayer);
+}
+
+function beginTurn(nextPlayer) {
+  if (currentPlayer === nextPlayer) return;
+  currentPlayer = nextPlayer;
+  document.getElementById('turn').innerText = `Player ${currentPlayer + 1} is taking their turn...`;
   if (canPlayerPlay(currentPlayer)) {
     if (localBots[currentPlayer]) {
       try {
@@ -178,7 +193,24 @@ function passTurn() {
 }
 
 function canPlayerPlay(player) {
-  return player === currentPlayer && (isLocalGame || currentPlayer === playingAs);
+  return player === currentPlayer && couldPlayerPlayLocally(currentPlayer);
+}
+
+function couldPlayerPlayLocally(player) {
+  return isLocalGame || player === playingAs;
+}
+
+function applyBoardState(state, log) {
+  console.log('APPLY STATE', state)
+  turnLog = log;
+  for (let i = 0; i < 9; i++) {
+    for (let j = 0; j < 9; j++) {
+      const newState = state[i][j];
+      const tile = tiles[i][j];
+      tile.clearPawn();
+      if (newState !== null) tile.setPawn(new Pawn(newState));
+    }
+  }
 }
 
 async function onSocketMsg(data) {
@@ -188,6 +220,25 @@ async function onSocketMsg(data) {
       switch (update) {
         case 'newGame':
           await joinNewGame(args[0]);
+          break;
+        case 'connected':
+          playingAs = args[1];
+          isLocalGame = false;
+          document.getElementById('turn').innerText = `Waiting for players to connect...`;
+          document.getElementById('user').innerText = `Connected as Player ${playingAs + 1}`;
+          resetBoard(false);
+          break;
+        case 'beginGame':
+          playerCount = args[0];
+          currentPlayer = -1;
+          resetBoard();
+          break;
+        case 'beginTurn':
+          nextPlayer = args[0];
+          beginTurn(nextPlayer);
+          break;
+        case 'boardState':
+          applyBoardState(args[0], args[1]);
           break;
       }
     }
@@ -309,6 +360,13 @@ async function joinNewGame(gameID) {
   sendActions([['connect', [gameID]]]);
 }
 
+function newOnlineGame(playerCount) {
+  sendActions([['newGame', [playerCount]]]);
+  document.getElementById('connect').disabled = true;
+  document.getElementById('connect4').disabled = true;
+  document.getElementById('disconnect').disabled = false;
+}
+
 function toAlphabet(i) {
   // really cheap and hacky...
   return 'ABCDEFGHIJ'[i];
@@ -325,7 +383,7 @@ function createLabel(i, pos) {
   return labelDiv;
 }
 
-function resetBoard() {
+function resetBoard(placePawns=true) {
   const board = document.getElementById('board');
   board.innerHTML = '';
 
@@ -354,6 +412,8 @@ function resetBoard() {
     board.append(row);
   }
 
+  if (!placePawns) return;
+
   getTile(4, 0).setPawn(new Pawn(0));
   getTile(4, 8).setPawn(new Pawn(1));
 }
@@ -368,8 +428,8 @@ socket.onopen = () => {
   if (urlGameId) {
     sendActions([['connect', [urlGameId]]]);
     document.getElementById('connect').disabled = true;
+    document.getElementById('connect4').disabled = true;
     document.getElementById('disconnect').disabled = false;
-    document.getElementById('settings').disabled = true;
   }
 }
 
