@@ -20,6 +20,7 @@ class Tile {
     this.y = y;
     this.pawn = null;
     this.walls = [false, false];
+    this.wallDivs = [null, null];
 
     this.tileDiv.onclick = this.onClick.bind(this);
   }
@@ -30,7 +31,7 @@ class Tile {
 
   onClick(e) {
     if (e.shiftKey) {
-      this.addWall(Number(e.ctrlKey));
+      this.placeWall(Number(e.ctrlKey));
     } else {
       if (selectedTile === null) {
         if (this.pawn && !this.pawn.lifted && canPlayerPlay(this.pawn.player)) {
@@ -126,12 +127,26 @@ class Tile {
       tail && !tail.walls[vertical]
     ) {
       this.walls[vertical] = true;
-      this.tileDiv.appendChild(
-        createElement('div', {
-          classes: ['wall', vertical ? 'vertical' : 'horizontal'],
-        })
-      );
-      passTurn();
+      const el = createElement('div', { classes: ['wall', vertical ? 'vertical' : 'horizontal'] });
+      this.wallDivs[vertical] = el;
+      this.tileDiv.appendChild(el);
+      return true;
+    }
+
+    return false;
+  }
+
+  removeWall(vertical) {
+    if (this.walls[vertical]) {
+      this.tileDiv.removeChild(this.wallDivs[vertical]);
+      this.wallDivs[vertical] = null;
+      this.walls[vertical] = false;
+    }
+  }
+
+  placeWall(vertical) {
+    if (couldPlayerPlayLocally(currentPlayer)) {
+      if (this.addWall(vertical)) passTurn();
     }
   }
 }
@@ -164,7 +179,7 @@ class Pawn {
 
 function pushBoardState() {
   const state = tiles.map(row => (
-    row.map(tile => tile.pawn?.player ?? null)
+    row.map(tile => [tile.pawn?.player ?? null, ...tile.walls])
   ));
   sendActions([['pushBoardState', [state, turnLog]]]);
 }
@@ -205,10 +220,14 @@ function applyBoardState(state, log) {
   turnLog = log;
   for (let i = 0; i < 9; i++) {
     for (let j = 0; j < 9; j++) {
-      const newState = state[i][j];
+      const [newState, ...walls] = state[i][j];
       const tile = tiles[i][j];
       tile.clearPawn();
       if (newState !== null) tile.setPawn(new Pawn(newState));
+      for (let i = 0; i < 2; i++) {
+        tile.removeWall(i);
+        if (walls[i]) tile.addWall(i);
+      }
     }
   }
 }
