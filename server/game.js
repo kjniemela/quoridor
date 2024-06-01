@@ -50,13 +50,25 @@ class Game {
   }
 
   checkWinConditions() {
-    console.log('FIXME!')
+    const playerWinTiles = {
+      0: this.boardState[8].map(state => state[0]),
+      1: this.boardState[0].map(state => state[0]),
+      2: this.boardState.map(row => row[8][0]),
+      3: this.boardState.map(row => row[0][0]),
+    };
+    for (let player = 0; player < this.playerCount; player++) {
+      for (const tilePlayer of playerWinTiles[player]) {
+        if (tilePlayer === player) {
+          this.win(player);
+        }
+      }
+    }
   }
 
   win(playerID) {
     for (let i = 0; i < this.playerCount; i++) {
-      if (i === playerID) this.sendTo(i, { update: [['gameWon', []]] });
-      else this.sendTo(i, { update: [['gameLost', []]] });
+      if (i === playerID) this.sendTo(i, { update: [['gameWon', [playerID]]] });
+      else this.sendTo(i, { update: [['gameLost', [playerID]]] });
     }
   }
 

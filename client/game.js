@@ -1,13 +1,14 @@
 let selectedTile = null;
 
 let tiles = [];
-let currentPlayer = 0;
+let currentPlayer = null;
 let playerCount = 2;
 
 let turnLog = [];
 
 const urlGameId = location.hash.substring(1);
 let isLocalGame = true;
+let isGameOver = false;
 
 const socket = new WebSocket(`wss://hmi.dynu.net/quoridor`);
 let playingAs = null;
@@ -30,6 +31,7 @@ class Tile {
   }
 
   onClick(e) {
+    if (isGameOver) return;
     if (e.shiftKey) {
       this.placeWall(Number(e.ctrlKey));
     } else {
@@ -123,8 +125,9 @@ class Tile {
     if (
       !this.walls[vertical] &&
       !this.walls[Number(!vertical)] &&
-      head && !head.walls[vertical] &&
-      tail && !tail.walls[vertical]
+      (!head || !head.walls[vertical]) &&
+      (!tail || !tail.walls[vertical]) &&
+      this.x < 8 && this.y < 8
     ) {
       this.walls[vertical] = true;
       const el = createElement('div', { classes: ['wall', vertical ? 'vertical' : 'horizontal'] });
@@ -177,6 +180,27 @@ class Pawn {
   }
 }
 
+function checkWinConditions() {
+  const playerWinTiles = {
+    0: tiles[8],
+    1: tiles[0],
+    2: tiles.map(row => row[8]),
+    3: tiles.map(row => row[0]),
+  };
+  for (let player = 0; player < playerCount; player++) {
+    for (const tile of playerWinTiles[player]) {
+      if (tile.pawn?.player === player) {
+        gameOver(player);
+      }
+    }
+  }
+}
+
+function gameOver(winner) {
+  isGameOver = true;
+  document.getElementById('turn').innerText = `Player ${winner + 1} has won!`;
+}
+
 function pushBoardState() {
   const state = tiles.map(row => (
     row.map(tile => [tile.pawn?.player ?? null, ...tile.walls])
@@ -187,9 +211,15 @@ function pushBoardState() {
 function passTurn() {
   if (selectedTile) selectedTile.pawn?.unlift();
   selectedTile = null;
-  if (!isLocalGame && currentPlayer === playingAs) pushBoardState();
+  if (isLocalGame) {
+    checkWinConditions();
+  } else {
+    if (currentPlayer === playingAs) {
+      pushBoardState();
+    }
+  }
   const nextPlayer = (currentPlayer + 1) % playerCount;
-  if (couldPlayerPlayLocally(nextPlayer)) beginTurn(nextPlayer);
+  if (couldPlayerPlayLocally(nextPlayer) && !isGameOver) beginTurn(nextPlayer);
 }
 
 function beginTurn(nextPlayer) {
@@ -258,6 +288,15 @@ async function onSocketMsg(data) {
           break;
         case 'boardState':
           applyBoardState(args[0], args[1]);
+          break;
+        case 'gameWon':
+          gameOver(args[0]);
+          document.getElementById('turn').innerText = `You have won!`;
+          disconnectFromGame();
+          break;
+        case 'gameLost':
+          gameOver(args[0]);
+          disconnectFromGame();
           break;
       }
     }
@@ -386,6 +425,15 @@ function newOnlineGame(playerCount) {
   document.getElementById('disconnect').disabled = false;
 }
 
+function disconnectFromGame() {
+  sendActions([['disconnect', []]])
+  document.getElementById('connect').disabled = false;
+  document.getElementById('connect4').disabled = false;
+  document.getElementById('disconnect').disabled = true;
+  document.getElementById('user').innerText = `Disconnected`;
+  location.hash = '';
+}
+
 function toAlphabet(i) {
   // really cheap and hacky...
   return 'ABCDEFGHIJ'[i];
@@ -461,4 +509,8 @@ socket.onmessage = (event) => {
     return;
   }
   onSocketMsg(data);
+}
+
+if (!urlGameId) {
+  beginTurn(0);
 }
