@@ -229,7 +229,7 @@ function beginTurn(nextPlayer) {
   if (canPlayerPlay(currentPlayer)) {
     if (localBots[currentPlayer]) {
       try {
-        localBots[currentPlayer]();
+        localBots[currentPlayer](currentPlayer);
       } catch (err) {
         console.error(err);
       }
